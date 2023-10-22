@@ -7,6 +7,14 @@ using System.Collections.ObjectModel;
 [Serializable]
 public class Bar
 {
+    [Serializable]
+    public class Room
+    {
+        public int Id { get; internal set; }
+        public Vector2Int PositionGridSpace;
+        public RoomType RoomType;
+    }
+    
     public ReadOnlyCollection<Room?> Rooms => _rooms.AsReadOnly();
 
     [SerializeField] private List<Room?> _rooms = new();
@@ -55,14 +63,6 @@ public class Bar
     public string ToJson(bool prettyPrint = false)
     {
         return JsonUtility.ToJson(this, prettyPrint);
-    }
-
-    [Serializable]
-    public class Room
-    {
-        public int Id { get; internal set; }
-        public Vector2Int PositionGridSpace;
-        public RoomType RoomType;
     }
 }
 
