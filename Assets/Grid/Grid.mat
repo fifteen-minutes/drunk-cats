@@ -45,8 +45,8 @@ Material:
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _GridSpaceX: {r: 0.31, g: 0.17, b: 0, a: 0}
     - _GridSpaceY: {r: -0.31, g: 0.17, b: 0, a: 0}
-    - _GridXInWorldSpace: {r: 0.31, g: 0.17, b: 0, a: 0}
-    - _GridYInWorldSpace: {r: -0.31, g: 0.17, b: 0, a: 0}
+    - _GridXInWorldSpace: {r: 1.34, g: 0.66, b: 0, a: 0}
+    - _GridYInWorldSpace: {r: -1.11, g: 0.56, b: 0, a: 0}
     - _I: {r: 1.4142135, g: 0.6, b: 0, a: 0}
     - _J: {r: -1.414214, g: 0.6, b: 0, a: 0}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
