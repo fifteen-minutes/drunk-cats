@@ -41,3 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Grid
+    uniqueID: 1541275431
+    locked: 0
+  - name: Room
+    uniqueID: 404675339
+    locked: 0
