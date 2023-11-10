@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 /// <summary>
 /// Attach to Main Camera game object.
 /// </summary>
+[RequireComponent(typeof(Camera))]
 public class CameraController : MonoBehaviour
 {
     /// <summary>
@@ -13,9 +14,13 @@ public class CameraController : MonoBehaviour
     /// </summary>
     public int MouseButtonToPan = 0;
     public float PanSensitivity = 1f;
+    public float ZoomSensitivity = 1f;
     public float MinPanWorldSpace = 0.3f;
     public float InterpolationMultiplier = 10f;
     public Camera Camera;
+
+    [SerializeField] private float _minCameraOrthographicSize = 1;
+    [SerializeField] private float _maxCameraOrthographicSize = 10;
 
     private Vector2? _cameraStartPosition;
     private Vector2? _startPanPositionScreenSpace;
@@ -33,6 +38,7 @@ public class CameraController : MonoBehaviour
 
     private void Update()
     {
+        // Handle input.
         if (Input.GetMouseButtonDown(MouseButtonToPan))
         {
             _startPanPositionScreenSpace = Input.mousePosition;
@@ -55,7 +61,15 @@ public class CameraController : MonoBehaviour
             _startPanPositionScreenSpace = null;
             _cameraStartPosition = null;
         }
+        
+        // Handle zoom.
+        float zoomDelta = -Input.mouseScrollDelta.y * ZoomSensitivity;
+        Camera.orthographicSize = Mathf.Clamp(
+            Camera.orthographicSize + zoomDelta,
+                _minCameraOrthographicSize,
+                _maxCameraOrthographicSize);
 
+        // Update position.
         if (_cameraDesiredPosition.HasValue)
         {
             if (InterpolationMultiplier < 1e-5)
