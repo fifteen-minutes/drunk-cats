@@ -1,4 +1,5 @@
-﻿
+﻿#nullable enable
+
 namespace YG
 {
     [System.Serializable]
@@ -17,8 +18,7 @@ namespace YG
         public bool[] openLevels = new bool[3];
 
         // Ваши сохранения
-
-        // ...
+        public Bar bar = new();
 
         // Поля (сохранения) можно удалять и создавать новые. При обновлении игры сохранения ломаться не должны
 

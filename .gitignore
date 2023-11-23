@@ -76,3 +76,7 @@ crashlytics-build.properties
 .vscode
 
 .idea
+
+# YandexGames in-editor saves
+Assets/YandexGame/WorkingData/Editor
+Assets/YandexGame/WorkingData/Editor.meta
