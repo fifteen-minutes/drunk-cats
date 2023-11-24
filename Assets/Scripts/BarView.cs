@@ -1,4 +1,6 @@
 #nullable enable
+using System;
+using System.Linq;
 using UnityEngine;
 
 
@@ -7,20 +9,38 @@ using UnityEngine;
 /// </summary>
 public class BarView : MonoBehaviour
 {
-    public GameObject DebugWhiteRoomPrefab = default!;
-    public GameObject DebugGrayRoomPrefab = default!;
+    public static BarView Instance { get; private set; }= default!;
+
+    
     public float MaxMouseDeltaToAllowBuildRoomGridSpace = 0.05f;
     public Transform RoomsParent = default!;
 
-    private Transform? _dragAndDropRoomPreview;
+    [SerializeField] private Room _roomPrefab = default!;
+    
     private Vector2? _touchStartGridPosition;
 
-    private void RebuildBarOnScene(BarModel model, Settings settings)
+    public Room? FindRoomById(int roomId)
+    {
+        return RoomsParent.GetComponentsInChildren<Room>().FirstOrDefault(room => room.Id == roomId);
+    }
+    
+    /// Finds room game object that corresponds to Bar.Room in model.
+    public Room FindRoom(Bar.Room room)
+    {
+        Room? roomGameObject = FindRoomById(room.Id);
+        if (roomGameObject == null)
+        {
+            Debug.LogError("Unable to find room in BarView component. Internal error.");
+        }
+        return roomGameObject!;
+    }
+    
+    private void RebuildBarOnScene(BarModel model, Settings? settings = null)
     {
         DeleteAllRoomsFromScene();
         foreach (Bar.Room room in model.Bar.Rooms)
         {
-            BuildRoomOnScene(room, settings);
+            BuildRoomOnScene(room, _roomPrefab, settings);
         }
     }
 
@@ -37,73 +57,26 @@ public class BarView : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void Awake()
     {
-        Camera? mainCamera = Camera.main;
-        if (mainCamera == null)
+        if (Instance != null)
         {
-            Debug.LogError(mainCamera);
+            Debug.LogError("Singleton error.");
+            Destroy(gameObject);
             return;
         }
-        
-        SettingsManager settingsManager = SettingsManager.Instance;
-        if (settingsManager == null)
-        {
-            Debug.LogError("SettingsManager game object with its script does not exist on the scene.");
-            return;
-        }
-        Settings settings = settingsManager.Settings;
-        
-        Vector2 pointerWorldPosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 pointerGridPosition = Geometry.WorldToGridPosition(pointerWorldPosition, settings);
-        Vector2Int pointerGridIntPosition = Vector2Int.FloorToInt(pointerGridPosition);
-        
-        bool inputBuildRoom = false;
-        if (Input.GetMouseButtonDown(0))
-        {
-            _touchStartGridPosition = pointerGridPosition;
-        }
-        else if (Input.GetMouseButtonUp(0) && _touchStartGridPosition.HasValue) 
-        {
-            Vector2 deltaGridSpace = pointerGridPosition - _touchStartGridPosition.Value;
-            inputBuildRoom = deltaGridSpace.sqrMagnitude < MaxMouseDeltaToAllowBuildRoomGridSpace * MaxMouseDeltaToAllowBuildRoomGridSpace &&
-                Vector2Int.FloorToInt(_touchStartGridPosition.Value) == pointerGridIntPosition;
-
-            if (MaxMouseDeltaToAllowBuildRoomGridSpace < 1e-5)
-            {
-                Debug.LogWarning("MaxMouseDeltaToAllowBuildRoom is zero. Input for building won't work.");
-            }
-            
-            _touchStartGridPosition = null;
-        }
-        
-        if (_dragAndDropRoomPreview != null)
-        {
-            _dragAndDropRoomPreview.position =
-                Geometry.GridToWorldPosition(Vector2Int.FloorToInt(pointerGridPosition) + Vector2Int.one, settings);
-        }
-
-        if (inputBuildRoom)
-        {
-            BarModel.Instance!.AddRoom(Vector2Int.FloorToInt(pointerGridPosition), RoomType.Default);
-        }
+        Instance = this;
     }
 
     private void Start()
     {
-        _dragAndDropRoomPreview = Instantiate(DebugGrayRoomPrefab).transform;
-        if (BarModel.Instance != null)
-        {
-            BarModel.Instance.BarChanged += OnBarModelChanged;
-        }
+        BarModel.Instance.BarChanged += OnBarModelChanged;
+        OnBarModelChanged(new BarChange(BarChangeType.Rebuild, null), BarModel.Instance);
     }
 
     private void OnDestroy()
     {
-        if (BarModel.Instance != null)
-        {
-            BarModel.Instance.BarChanged -= OnBarModelChanged;
-        }
+        BarModel.Instance.BarChanged -= OnBarModelChanged;
     }
 
     private void OnBarModelChanged(BarChange barChange, BarModel barModel)
@@ -118,14 +91,10 @@ public class BarView : MonoBehaviour
 
     }
     
-    private void BuildRoomOnScene(Vector2Int gridIntPosition, GameObject roomPrefab, Settings settings)
+    private void BuildRoomOnScene(Bar.Room room, Room roomPrefab, Settings? settings = null)
     {
-        GameObject newRoom = Instantiate(roomPrefab, RoomsParent, true);
-        newRoom.transform.position = Geometry.GridToWorldPosition(gridIntPosition + Vector2Int.one, settings);
-    }
-    
-    private void BuildRoomOnScene(Bar.Room room, Settings settings)
-    {
-        BuildRoomOnScene(room.PositionGridSpace, DebugWhiteRoomPrefab, settings);
+        Room newRoom = Instantiate(roomPrefab, RoomsParent, true);
+        newRoom.Id = room.Id;
+        newRoom.transform.position = Geometry.GridToWorldPosition(room.PositionGridSpace + Vector2Int.one, settings);
     }
 }
