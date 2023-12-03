@@ -99,6 +99,12 @@ public class BarModel : MonoBehaviour
         if (Instance == null) return;
         Instance.ResetProgress();
     }
+
+    [ConsoleMethod("PrintBar", "Outputs the bar model in json to the console.")]
+    public static void PrintBar_ConsoleMethod()
+    {
+        Debug.Log(Instance.Bar.ToJson(true));
+    }
     
     public void SaveProgress()
     {
@@ -162,7 +168,14 @@ public class BarModel : MonoBehaviour
 
     public Bar.Room? FindRoomByPosition(Vector2Int gridPosition)
     {
-        return Bar.Rooms.FirstOrDefault(room => room.PositionGridSpace == gridPosition);
+        // I don't know why, but this thing does not work correct:
+        // return Bar.Rooms.FirstOrDefault(room => room.PositionGridSpace == gridPosition);
+        // Simpler way:
+        foreach (Bar.Room room in Bar.Rooms)
+        {
+            if (room.PositionGridSpace == gridPosition) return room;
+        }
+        return null;
     }
 
     private void Awake()

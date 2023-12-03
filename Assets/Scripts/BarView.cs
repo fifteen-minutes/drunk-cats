@@ -21,7 +21,14 @@ public class BarView : MonoBehaviour
 
     public Room? FindRoomById(int roomId)
     {
-        return RoomsParent.GetComponentsInChildren<Room>().FirstOrDefault(room => room.Id == roomId);
+        // The code below seems to be right but it does not work correct. I don't know why.
+        // return RoomsParent.GetComponentsInChildren<Room>().FirstOrDefault(room => room.Id == roomId);
+        
+        foreach (Room room in RoomsParent.GetComponentsInChildren<Room>())
+        {
+            if (room.Id == roomId) return room;
+        }
+        return null;
     }
     
     /// Finds room game object that corresponds to Bar.Room in model.
