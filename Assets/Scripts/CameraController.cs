@@ -1,7 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
+#nullable enable
+using System;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 /// <summary>
 /// Attach to Main Camera game object.
@@ -9,25 +8,40 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(Camera))]
 public class CameraController : MonoBehaviour
 {
-    /// <summary>
+    public static CameraController Instance;
+
+    public event Action<Vector2>? ClickedOnGridCoordinates;
+
+    
     /// 0 - left mouse button, 1 - right mouse button.
-    /// </summary>
     public int MouseButtonToPan = 0;
+    /// 0 - left mouse button, 1 - right mouse button.
+    public int MouseButtonToSelect = 0;
     public float PanSensitivity = 1f;
     public float ZoomSensitivity = 1f;
     public float MinPanWorldSpace = 0.3f;
     public float InterpolationMultiplier = 10f;
+    public GameObject? ObservedGameObject;
     public Camera Camera;
 
     [SerializeField] private float _minCameraOrthographicSize = 1;
     [SerializeField] private float _maxCameraOrthographicSize = 10;
+    [SerializeField] private float _maxMouseDeltaGridSpaceForClick = 0.05f;
 
     private Vector2? _cameraStartPosition;
-    private Vector2? _startPanPositionScreenSpace;
+    private Vector2? _startClickPositionScreenSpace;
     private Vector2? _cameraDesiredPosition;
 
     private void Awake()
     {
+        if (Instance != null)
+        {
+            Debug.LogError("Singleton error.");
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        
         Camera = GetComponent<Camera>();
         if (Camera == null)
         {
@@ -38,29 +52,59 @@ public class CameraController : MonoBehaviour
 
     private void Update()
     {
-        // Handle input.
+        if (ObservedGameObject != null)
+        {
+            _cameraDesiredPosition = (Vector2)ObservedGameObject.transform.position;
+        }
+
+        Vector2? clicked = null;
+        // Handle pan;
         if (Input.GetMouseButtonDown(MouseButtonToPan))
         {
-            _startPanPositionScreenSpace = Input.mousePosition;
+            _startClickPositionScreenSpace = Input.mousePosition;
             _cameraStartPosition = transform.position;
         }
         else if (Input.GetMouseButton(MouseButtonToPan) &&
-            _startPanPositionScreenSpace.HasValue &&
-            _cameraStartPosition.HasValue)
+                 _startClickPositionScreenSpace.HasValue &&
+                 _cameraStartPosition.HasValue)
         {
-            Vector2 delta = Camera.ScreenToWorldPoint(Input.mousePosition) - Camera.ScreenToWorldPoint(_startPanPositionScreenSpace.Value);
-            if (delta.sqrMagnitude < MinPanWorldSpace * MinPanWorldSpace)
+            Vector2 deltaWorldPosition = 
+                Geometry.ScreenToWorldPosition(Input.mousePosition) -
+                Geometry.ScreenToWorldPosition(_startClickPositionScreenSpace.Value);
+            if (deltaWorldPosition.sqrMagnitude < MinPanWorldSpace * MinPanWorldSpace)
             {
-                delta = Vector2.zero;
+                deltaWorldPosition = Vector2.zero;
             }
-            Vector2 newPosition = _cameraStartPosition.Value + (-delta * PanSensitivity);
-            _cameraDesiredPosition = newPosition;
+
+            _cameraDesiredPosition = _cameraStartPosition.Value + (-deltaWorldPosition * PanSensitivity);
         }
-        else if (Input.GetMouseButtonUp(MouseButtonToPan))
+        else if (Input.GetMouseButtonUp(MouseButtonToPan) && _startClickPositionScreenSpace.HasValue)
         {
-            _startPanPositionScreenSpace = null;
+            Vector2 deltaGridSpace = 
+                Geometry.ScreenToGridPosition(Input.mousePosition) -
+                Geometry.ScreenToGridPosition(_startClickPositionScreenSpace.Value);
+            Vector2 clickStartGridPosition = Geometry.ScreenToGridPosition(_startClickPositionScreenSpace.Value);
+            Vector2 currentGridPosition = Geometry.ScreenToGridPosition(Input.mousePosition);
+            if (deltaGridSpace.sqrMagnitude < _maxMouseDeltaGridSpaceForClick * _maxMouseDeltaGridSpaceForClick &&
+                Vector2Int.FloorToInt(clickStartGridPosition) == Vector2Int.FloorToInt(currentGridPosition))
+            {
+                clicked = clickStartGridPosition;
+            }
+
+            if (_maxMouseDeltaGridSpaceForClick < 1e-5)
+            {
+                Debug.LogWarning("MaxMouseDeltaToAllowBuildRoom is zero. Input for building won't work.");
+            }
+            
+            _startClickPositionScreenSpace = null;
             _cameraStartPosition = null;
         }
+        
+        if (clicked.HasValue)
+        {
+            ClickedOnGridCoordinates?.Invoke(clicked.Value);
+        }
+
         
         // Handle zoom.
         float zoomDelta = -Input.mouseScrollDelta.y * ZoomSensitivity;
@@ -80,6 +124,5 @@ public class CameraController : MonoBehaviour
             newPosition.z = transform.position.z;
             transform.position = newPosition;
         }
-        
     }
 }

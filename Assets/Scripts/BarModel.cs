@@ -4,6 +4,7 @@ using IngameDebugConsole;
 using UnityEngine;
 using YG;
 using System;
+using System.Linq;
 
 
 [Serializable]
@@ -72,7 +73,7 @@ public class BarModel : MonoBehaviour
 {
     public event Action<BarChange, BarModel>? BarChanged;
 
-    public static BarModel? Instance;
+    public static BarModel Instance = default!;
     public Bar Bar = new();
 
     [ConsoleMethod("SaveProgress", "Saves game progress.")]
@@ -122,10 +123,15 @@ public class BarModel : MonoBehaviour
         YandexGame.ResetSaveProgress();
         LoadProgress();
     }
+
+    /// Sets standard bar with one room. Used when game starts.
+    public void SetStartupBar()
+    {
+        Bar = new Bar();
+        AddRoom(Vector2Int.zero, RoomType.Default);
+    }
     
-    /// <summary>
     /// Problem of the deep future: RoomId is int32. Could be overfull someday.
-    /// </summary>
     public void AddRoom(Vector2Int positionGridSpace, RoomType roomType)
     {
         int roomId = Bar.Rooms.Count;
@@ -139,11 +145,9 @@ public class BarModel : MonoBehaviour
         BarChanged?.Invoke(new BarChange(BarChangeType.AddRoom, room), this);
     }
 
-    /// <summary>
     /// Returns false if roomId is less than 0 or equal or greater then Rooms.Count.
     /// Returns false if room with this index is already deleted.
     /// Returns true if room successfully deleted.
-    /// </summary>
     public bool DeleteRoom(int roomIndex)
     {
         if (roomIndex < 0 || roomIndex >= Bar.Rooms.Count) return false;
@@ -154,6 +158,11 @@ public class BarModel : MonoBehaviour
         }
         BarChanged?.Invoke(new BarChange(BarChangeType.RemoveRoom, removedRoom), this);
         return true;
+    }
+
+    public Bar.Room? FindRoomByPosition(Vector2Int gridPosition)
+    {
+        return Bar.Rooms.FirstOrDefault(room => room.PositionGridSpace == gridPosition);
     }
 
     private void Awake()

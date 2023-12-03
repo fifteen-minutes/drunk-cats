@@ -1,3 +1,4 @@
+#nullable enable
 using UnityEngine;
 
 /// <summary>
@@ -7,8 +8,10 @@ using UnityEngine;
 /// </summary>
 public class Geometry : MonoBehaviour
 {
-    public static Vector2 WorldToGridPosition(Vector3 worldPosition, Settings settings)
+    public static Vector2 WorldToGridPosition(Vector3 worldPosition, Settings? settings = null)
     {
+        settings ??= SettingsManager.Instance.Settings;
+        
         Vector2 gridXInWorldSpace = settings.GridSpaceXInWorldSpace;
         Vector2 gridYInWorldSpace = settings.GridSpaceYInWorldSpace;
         // Grid Space Matrix:
@@ -28,8 +31,9 @@ public class Geometry : MonoBehaviour
         return new Vector2(xGridSpace, yGridSpace);
     }
 
-    public static Vector2 GridToWorldPosition(Vector2 gridPosition, Settings settings)
+    public static Vector2 GridToWorldPosition(Vector2 gridPosition, Settings? settings = null)
     {
+        settings ??= SettingsManager.Instance.Settings;
         Vector2 gridXInWorldSpace = settings.GridSpaceXInWorldSpace;
         Vector2 gridYInWorldSpace = settings.GridSpaceYInWorldSpace;
         // Grid Space Matrix:
@@ -40,5 +44,41 @@ public class Geometry : MonoBehaviour
         float x = gridXInWorldSpace.x * gridPosition.x + gridYInWorldSpace.x * gridPosition.y;
         float y = gridXInWorldSpace.y * gridPosition.x + gridYInWorldSpace.y * gridPosition.y;
         return new Vector2(x, y);
+    }
+
+    public static Vector2 ScreenToWorldPosition(Vector3 screenPosition, Camera? camera = null)
+    {
+        if (camera == null)
+        {
+            camera = CameraController.Instance.Camera;
+        }
+        return camera.ScreenToWorldPoint(screenPosition);
+    }
+    
+    public static Vector2 WorldToScreenPosition(Vector3 worldPosition, Camera? camera = null)
+    {
+        if (camera == null)
+        {
+            camera = CameraController.Instance.Camera;
+        }
+        return camera.WorldToScreenPoint(worldPosition);
+    }
+
+    public static Vector2 ScreenToGridPosition(Vector3 screenPosition, Camera? camera = null, Settings? settings = null)
+    {
+        if (camera == null)
+        {
+            camera = CameraController.Instance.Camera;
+        }
+        return WorldToGridPosition(ScreenToWorldPosition(screenPosition, camera), settings);
+    }
+
+    public static Vector2 GridToScreenPosition(Vector2 gridPosition, Camera? camera = null, Settings? settings = null)
+    {
+        if (camera == null)
+        {
+            camera = CameraController.Instance.Camera;
+        }
+        return WorldToScreenPosition(GridToWorldPosition(gridPosition, settings), camera);
     }
 }
