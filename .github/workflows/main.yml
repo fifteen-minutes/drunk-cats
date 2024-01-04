@@ -22,4 +22,4 @@ jobs:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         with:
           targetPlatform: WebGL
-          projectPath: drunk-cats
+          projectPath: .
