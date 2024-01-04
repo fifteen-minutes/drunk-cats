@@ -6,15 +6,11 @@ jobs:
     name: Unity Build
     runs-on: ubuntu-latest
     steps:
-      # Cache libraries for improve build speed
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: Library
-          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
-          restore-keys: |
-            Library-
       - name: Unity - Build
         uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          targetPlatform: WindowsStandartalone
+          targetPlatform: WebGL
