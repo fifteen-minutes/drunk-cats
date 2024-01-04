@@ -6,9 +6,6 @@ jobs:
     name: Unity Build
     runs-on: ubuntu-latest
     steps:
-      # Check Unity License 
-      - name: Unity - Activate
-        uses: game-ci/unity-activate@v2.0.0
       # Cache libraries for improve build speed
       - name: Cache
         uses: actions/cache@v2
@@ -17,3 +14,11 @@ jobs:
           key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
             Library-
+      - name: Unity - Build
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          targetPlatform: WebGL
