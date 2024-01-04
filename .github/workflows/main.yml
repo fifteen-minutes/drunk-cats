@@ -6,6 +6,10 @@ jobs:
     name: Unity Build
     runs-on: ubuntu-latest
     steps:
+      # Check Unity License 
+      - name: Unity - Activate
+        uses: game-ci/unity-activate@v2.0.0
+      # Cache libraries for improve build speed
       - name: Cache
         uses: actions/cache@v2
         with:
