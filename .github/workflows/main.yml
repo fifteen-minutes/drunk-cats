@@ -2,7 +2,7 @@ name: Repository Build Pipeline
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
-  BuildAllPlatforms:
+  Build-and-Deploy-WebGL:
     name: Build for ${{ matrix.targetPlatform }}
     runs-on: ubuntu-latest
     strategy:
@@ -30,7 +30,8 @@ jobs:
         with:
             targetPlatform: ${{ matrix.targetPlatform }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: JamesIves/github-pages-deploy-action@v4
         with:
-            name: Build-${{ matrix.targetPlatform }}
-            path: build/${{ matrix.targetPlatform }}
+            folder: build/${{ matrix.targetPlatform }}
+      
+      
