@@ -1,9 +1,24 @@
 name: Repository Build Pipeline
+
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+
 on: [push]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
 jobs:
   Build-and-Deploy-WebGL:
     name: Build for ${{ matrix.targetPlatform }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -30,8 +45,12 @@ jobs:
         with:
             targetPlatform: ${{ matrix.targetPlatform }}
 
-      - uses: JamesIves/github-pages-deploy-action@v4
+      - uses: actions/upload-pages-artifact@v2
         with:
-            folder: build/${{ matrix.targetPlatform }}
+            path: 'build/${{ matrix.targetPlatform }}/${{ matrix.targetPlatform }}'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
       
       
