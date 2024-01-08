@@ -1,0 +1,66 @@
+name: Repository Build Pipeline
+
+run-name: ${{ github.actor }} is triggered Deploy Pipeline 🚀
+
+on: 
+  push:
+    branches: 
+      - main
+  pull_request:
+    branches:
+      -main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  Build-and-Deploy-WebGL:
+    name: Build and Deploy ${{ matrix.targetPlatform }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform:
+          - WebGL
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          lfs: true
+      
+      - name: Cache Libraries
+        uses: actions/cache@v2
+        with:
+          path: Library
+          key: Library-${{ matrix.targetPlatform }}
+          restore-keys: Library-
+
+      - name: Build for ${{ matrix.targetPlatform }}
+        uses: game-ci/unity-builder@v4
+        env:
+            UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+            UNITY_EMAIL: ${{secrets.unity_EMAIL}}
+            UNITY_PASSWORD: ${{secrets.UNITY_PASSWORD}}
+        with:
+            targetPlatform: ${{ matrix.targetPlatform }}
+
+      - name: Upload Artifact to Github Pages
+        uses: actions/upload-pages-artifact@v2
+        with:
+            path: 'build/${{ matrix.targetPlatform }}/${{ matrix.targetPlatform }}'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+      
+      
